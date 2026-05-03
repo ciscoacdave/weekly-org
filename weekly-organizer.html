@@ -743,10 +743,12 @@
       <button id="prevWeek" title="Previous week">‹</button>
       <span id="weekRange"></span>
       <button id="nextWeek" title="Next week">›</button>
-      <button id="todayBtn" style="width:auto;padding:0 10px;font-family:'DM Mono',monospace;font-size:0.7rem;">Today</button>
+      <button id="todayBtn" style="width:auto;padding:0 10px;font-family:'Inter',sans-serif;font-size:0.72rem;">Today</button>
     </div>
     <div class="header-controls">
       <button class="btn" id="clearAllBtn">Clear All</button>
+      <button class="btn" onclick="exportData()" title="Download a JSON backup">Export</button>
+      <button class="btn" onclick="importData()" title="Restore from a JSON backup">Import</button>
       <button class="btn" onclick="window.print()">Print</button>
     </div>
   </div>
@@ -806,19 +808,76 @@ const PRIORITIES = ['', '🔥', '⚡', '✅'];
 
 let state = {
   weekOffset: 0,
-  notes: {} // { dayKey: [{id,text,color,tag,priority}] }
+  notes: {}
 };
 
-// --- Persistence ---
-function save() {
-  localStorage.setItem('weekplanner_v2', JSON.stringify(state));
-}
+let quickLinks = [];  // declared here so load() can populate it
+
+// ── Persistence ──────────────────────────────────────────────────────────────
+// Primary:  localStorage — works everywhere the page is served (GitHub Pages,
+//           any web server, local file:// in most browsers).
+// Secondary: "Export" button writes a standalone JSON backup file the user
+//            can keep alongside the HTML.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const LS_KEY = 'weekplanner_v4';
+
+let _saveQueued = false;
 
 function load() {
-  const s = localStorage.getItem('weekplanner_v2');
-  if (s) {
-    try { state = JSON.parse(s); } catch(e) {}
-  }
+  try {
+    const s = localStorage.getItem(LS_KEY);
+    if (s) {
+      const d = JSON.parse(s);
+      if (d.state)      state      = d.state;
+      if (d.quickLinks) quickLinks = d.quickLinks;
+    }
+  } catch(e) { console.warn('Could not load saved data:', e); }
+}
+
+// Debounced save — coalesces rapid keystrokes into one write
+function save() {
+  if (_saveQueued) return;
+  _saveQueued = true;
+  setTimeout(() => {
+    _saveQueued = false;
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({ state, quickLinks }));
+    } catch(e) { console.warn('Save failed:', e); }
+  }, 400);
+}
+
+// ── Export / Import ──────────────────────────────────────────────────────────
+function exportData() {
+  const blob = new Blob(
+    [JSON.stringify({ state, quickLinks }, null, 2)],
+    { type: 'application/json' }
+  );
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `week-planner-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Backup downloaded ✓');
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = async () => {
+    try {
+      const text = await input.files[0].text();
+      const d = JSON.parse(text);
+      if (d.state)      state      = d.state;
+      if (d.quickLinks) quickLinks = d.quickLinks;
+      save();
+      render();
+      qlRender();
+      toast('Data restored ✓');
+    } catch(e) { toast('Import failed — invalid file'); }
+  };
+  input.click();
 }
 
 // --- Date helpers ---
@@ -1207,18 +1266,9 @@ function getWeekNum(d) {
 }
 
 // --- Quick Links ---
-let quickLinks = [];
+function qlSave() { save(); }  // unified save
 
-function qlSave() {
-  localStorage.setItem('weekplanner_quicklinks', JSON.stringify(quickLinks));
-}
-
-function qlLoad() {
-  try {
-    const s = localStorage.getItem('weekplanner_quicklinks');
-    if (s) quickLinks = JSON.parse(s);
-  } catch(e) {}
-}
+function qlLoad() {}  // data loaded centrally in load()
 
 function qlGetFavicon(url) {
   try {
@@ -1302,7 +1352,6 @@ document.getElementById('qlLabelInput').addEventListener('keydown', e => {
 
 // --- Init ---
 load();
-qlLoad();
 render();
 qlRender();
 </script>
