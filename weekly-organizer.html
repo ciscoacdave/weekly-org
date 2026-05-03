@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Organizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* Momentum Design — dark theme */
+    --bg: #1b1c1e;           /* md-sys-color-background dark */
+    --paper: #27292c;        /* md-sys-color-surface-1 */
+    --paper-2: #32353a;      /* md-sys-color-surface-2 */
+    --ink: #f0f2f5;          /* md-sys-color-on-background */
+    --ink-soft: #9ea7b1;     /* md-sys-color-on-surface-variant */
+    --rule: #3d4045;         /* subtle dividers */
+    /* Webex Blue — primary brand */
+    --accent: #0070d2;       /* md-theme-blue */
+    --accent-bright: #07b8f5;/* md-theme-cyan / Webex teal */
+    --accent-soft: rgba(0,112,210,0.15);
+    --today: #0070d2;
+    --today-soft: rgba(0,112,210,0.18);
+    /* Momentum decorative note palette */
+    --note-blue:   #0e2a45;  /* Webex Blue tint */
+    --note-cyan:   #0b2e38;  /* Webex Teal tint */
+    --note-violet: #261a40;  /* Momentum Violet */
+    --note-mint:   #0e2e24;  /* Momentum Mint */
+    --note-rose:   #3a1624;  /* Momentum Rose */
+    /* Text on notes */
+    --note-blue-ink:   #60b8ff;
+    --note-cyan-ink:   #3dd9ef;
+    --note-violet-ink: #b49cff;
+    --note-mint-ink:   #50e3a4;
+    --note-rose-ink:   #ff8aad;
+    --shadow: 0 2px 8px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25);
+    --shadow-lift: 0 8px 28px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.30);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 32px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-left::before {
+    content: '';
+    display: inline-block;
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #0070d2 0%, #07b8f5 100%);
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(7,184,245,0.35);
+  }
+
+  h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .week-label {
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .header-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 6px 14px;
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 6px;
+  }
+
+  .btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .btn-accent:hover {
+    background: #005aab;
+    border-color: #005aab;
+    color: white;
+  }
+
+  .week-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+  }
+
+  .week-nav button {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-soft);
+    transition: all 0.15s;
+  }
+
+  .week-nav button:hover {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: white;
+  }
+
+  .board {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .day-col {
+    border-right: 1px solid var(--rule);
+    min-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    transition: background 0.2s;
+  }
+
+  .day-col:last-child { border-right: none; }
+
+  .day-col.drag-over {
+    background: var(--today-soft);
+  }
+
+  .day-col.today .day-header {
+    background: linear-gradient(135deg, #004f99 0%, #0070d2 100%);
+    color: white;
+    border-bottom-color: #0070d2;
+  }
+
+  .day-col.today .day-header .day-num {
+    color: rgba(255,255,255,0.65);
+  }
+
+  .day-col.today .day-header .day-name {
+    color: white;
+  }
+
+  .day-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .day-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+
+  .day-num {
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    margin-top: 1px;
+  }
+
+  .add-note-btn {
+    background: none;
+    border: 1px solid var(--rule);
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--ink-soft);
+    padding: 2px 7px;
+    line-height: 1.4;
+    transition: all 0.15s;
+    border-radius: 5px;
+    font-weight: 400;
+  }
+
+  .add-note-btn:hover {
+    color: white;
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: none;
+  }
+
+  .day-notes {
+    padding: 10px 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Sticky Notes */
+  .note {
+    border-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: var(--shadow);
+    position: relative;
+    cursor: grab;
+    transition: box-shadow 0.2s, transform 0.2s;
+    animation: noteIn 0.2s ease;
+    break-inside: avoid;
+  }
+
+  @keyframes noteIn {
+    from { opacity: 0; transform: scale(0.92) translateY(-4px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .note:active { cursor: grabbing; }
+
+  .note.dragging {
+    opacity: 0.45;
+    transform: scale(0.97);
+  }
+
+  .note.drag-ghost {
+    box-shadow: var(--shadow-lift);
+    transform: scale(1.03) rotate(1.5deg);
+    opacity: 0.92;
+    pointer-events: none;
+  }
+
+  .note-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .note:hover .note-toolbar,
+  .note:focus-within .note-toolbar {
+    opacity: 1;
+  }
+
+  .note-colors {
+    display: flex;
+    gap: 4px;
+  }
+
+  .color-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  .color-dot:hover { transform: scale(1.3); }
+
+  .note-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .note-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.1s, background 0.1s;
+  }
+
+  .note-action-btn:hover {
+    color: var(--ink);
+    background: rgba(255,255,255,0.12);
+  }
+
+  .note-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--ink);
+    background: none;
+    border: none;
+    outline: none;
+    width: 100%;
+    resize: none;
+    min-height: 48px;
+    cursor: inherit;
+  }
+
+  .note-text::placeholder { color: rgba(255,255,255,0.25); }
+
+  .note-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .note:hover .note-footer,
+  .note:focus-within .note-footer {
+    opacity: 1;
+  }
+
+  .note-tag-input {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.65rem;
+    background: none;
+    border: none;
+    border-bottom: 1px dashed rgba(255,255,255,0.2);
+    outline: none;
+    color: rgba(255,255,255,0.5);
+    width: 80px;
+    letter-spacing: 0.02em;
+  }
+
+  .note-tag-input::placeholder { color: rgba(255,255,255,0.2); }
+
+  .note-priority {
+    font-size: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s;
+  }
+
+  .note-priority:hover { transform: scale(1.3); }
+
+  /* Empty state */
+  .day-empty {
+    text-align: center;
+    padding: 40px 8px;
+    font-size: 0.68rem;
+    color: var(--rule);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* Context menu */
+  .context-menu {
+    position: fixed;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lift);
+    z-index: 1000;
+    min-width: 168px;
+    padding: 4px 0;
+    animation: menuIn 0.12s ease;
+    display: none;
+  }
+
+  @keyframes menuIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-4px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .context-menu.visible { display: block; }
+
+  .context-item {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 400;
+    padding: 8px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink);
+    transition: background 0.1s;
+  }
+
+  .context-item:hover {
+    background: var(--accent-soft);
+    color: #60b8ff;
+  }
+
+  .context-item.danger:hover {
+    background: rgba(255, 80, 80, 0.12);
+    color: #ff6b6b;
+  }
+
+  .context-divider {
+    height: 1px;
+    background: var(--rule);
+    margin: 4px 0;
+  }
+
+  /* Move submenu */
+  .context-item.has-sub { position: relative; }
+  .context-item.has-sub::after { content: '›'; margin-left: auto; font-size: 1rem; color: var(--ink-soft); }
+
+  .submenu {
+    position: absolute;
+    left: 100%;
+    top: -4px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lift);
+    min-width: 120px;
+    padding: 4px 0;
+    display: none;
+  }
+
+  .context-item.has-sub:hover .submenu { display: block; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 10px 20px;
+    border-radius: 8px;
+    z-index: 9999;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0,112,210,0.4);
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .board { grid-template-columns: repeat(3, 1fr); }
+    .day-col:nth-child(4),
+    .day-col:nth-child(5) { border-top: 1px solid var(--rule); }
+  }
+
+  @media (max-width: 600px) {
+    .board { grid-template-columns: 1fr; }
+    header { padding: 14px 16px; }
+    h1 { font-size: 1.5rem; }
+  }
+
+  /* Print */
+  @media print {
+    body::before { display: none; }
+    .add-note-btn, .note-toolbar, .note-footer, .header-controls, .week-nav, .quicklinks-bar { display: none; }
+  }
+
+  /* ── Quick Links Bar ── */
+  .quicklinks-bar {
+    position: relative;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--rule);
+    flex-wrap: wrap;
+    min-height: 44px;
+  }
+
+  .quicklinks-label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+
+  .ql-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 20px;
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    position: relative;
+  }
+
+  .ql-link:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: #60b8ff;
+  }
+
+  .ql-link .ql-favicon {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+
+  .ql-link .ql-del {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    font-size: 0.6rem;
+    color: var(--ink-soft);
+    margin-left: 2px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .ql-link:hover .ql-del { display: inline-flex; }
+  .ql-link .ql-del:hover { background: rgba(255,80,80,0.3); color: #ff6b6b; }
+
+  .ql-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: none;
+    border: 1px dashed var(--rule);
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+  }
+
+  .ql-add-btn:hover {
+    border-color: var(--accent);
+    color: #60b8ff;
+    background: var(--accent-soft);
+  }
+
+  /* Add link modal */
+  .ql-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.15s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+
+  .ql-modal {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 24px 28px;
+    min-width: 320px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: var(--shadow-lift);
+    animation: slideUp 0.18s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .ql-modal h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 18px;
+  }
+
+  .ql-modal label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 5px;
+  }
+
+  .ql-modal input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    color: var(--ink);
+    outline: none;
+    margin-bottom: 14px;
+    transition: border-color 0.15s;
+  }
+
+  .ql-modal input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0,112,210,0.2);
+  }
+
+  .ql-modal input::placeholder { color: var(--ink-soft); opacity: 0.6; }
+
+  .ql-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
+  .ql-modal-actions .btn { font-family: 'Inter', sans-serif; }
+  .ql-modal-actions .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    font-size: 0.78rem;
+    padding: 7px 18px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s;
+  }
+  .ql-modal-actions .btn-primary:hover { background: #005aab; }
+  .ql-modal-actions .btn-cancel {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s;
+  }
+  .ql-modal-actions .btn-cancel:hover { background: var(--paper-2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Week Planner</h1>
+    <div class="week-label" id="weekLabel"></div>
+  </div>
+  <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+    <div class="week-nav">
+      <button id="prevWeek" title="Previous week">‹</button>
+      <span id="weekRange"></span>
+      <button id="nextWeek" title="Next week">›</button>
+      <button id="todayBtn" style="width:auto;padding:0 10px;font-family:'DM Mono',monospace;font-size:0.7rem;">Today</button>
+    </div>
+    <div class="header-controls">
+      <button class="btn" id="clearAllBtn">Clear All</button>
+      <button class="btn" onclick="window.print()">Print</button>
+    </div>
+  </div>
+</header>
+
+<!-- Quick Links Bar -->
+<div class="quicklinks-bar" id="quicklinksBar">
+  <span class="quicklinks-label">Quick Links</span>
+  <div id="qlList" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+  <button class="ql-add-btn" id="qlAddBtn">＋ Add Link</button>
+</div>
+
+<!-- Add Link Modal -->
+<div class="ql-modal-overlay" id="qlModal" style="display:none;">
+  <div class="ql-modal">
+    <h3>Add Quick Link</h3>
+    <label>Label</label>
+    <input type="text" id="qlLabelInput" placeholder="e.g. Webex CC Admin" maxlength="40" />
+    <label>URL</label>
+    <input type="url" id="qlUrlInput" placeholder="https://…" />
+    <div class="ql-modal-actions">
+      <button class="btn-cancel" id="qlCancelBtn">Cancel</button>
+      <button class="btn-primary" id="qlSaveBtn">Add Link</button>
+    </div>
+  </div>
+</div>
+
+<div class="board" id="board"></div>
+
+<div class="context-menu" id="contextMenu">
+  <div class="context-item has-sub" id="moveToMenu">
+    <span>📋</span> Move to…
+    <div class="submenu" id="moveSubmenu"></div>
+  </div>
+  <div class="context-item has-sub" id="colorMenu">
+    <span>🎨</span> Color…
+    <div class="submenu" id="colorSubmenu"></div>
+  </div>
+  <div class="context-divider"></div>
+  <div class="context-item" id="duplicateNote"><span>📄</span> Duplicate</div>
+  <div class="context-divider"></div>
+  <div class="context-item danger" id="deleteNote"><span>🗑</span> Delete</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const NOTE_COLORS = [
+  { label: 'Webex Blue',  val: '#0e2a45', dot: '#60b8ff' },
+  { label: 'Cyan',        val: '#0b2e38', dot: '#3dd9ef' },
+  { label: 'Violet',      val: '#261a40', dot: '#b49cff' },
+  { label: 'Mint',        val: '#0e2e24', dot: '#50e3a4' },
+  { label: 'Rose',        val: '#3a1624', dot: '#ff8aad' },
+];
+const PRIORITIES = ['', '🔥', '⚡', '✅'];
+
+let state = {
+  weekOffset: 0,
+  notes: {} // { dayKey: [{id,text,color,tag,priority}] }
+};
+
+// --- Persistence ---
+function save() {
+  localStorage.setItem('weekplanner_v2', JSON.stringify(state));
+}
+
+function load() {
+  const s = localStorage.getItem('weekplanner_v2');
+  if (s) {
+    try { state = JSON.parse(s); } catch(e) {}
+  }
+}
+
+// --- Date helpers ---
+function getMondayOf(offset = 0) {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun
+  const diff = day === 0 ? -6 : 1 - day;
+  const mon = new Date(now);
+  mon.setDate(now.getDate() + diff + offset * 7);
+  mon.setHours(0,0,0,0);
+  return mon;
+}
+
+function dayKey(mon, dayIdx) {
+  const d = new Date(mon);
+  d.setDate(mon.getDate() + dayIdx);
+  return d.toISOString().slice(0,10);
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function isToday(d) {
+  const t = new Date();
+  return d.toISOString().slice(0,10) === t.toISOString().slice(0,10);
+}
+
+// --- Note helpers ---
+function uid() {
+  return Math.random().toString(36).slice(2,10);
+}
+
+function ensureDay(key) {
+  if (!state.notes[key]) state.notes[key] = [];
+}
+
+function addNote(dayKey, text = '') {
+  ensureDay(dayKey);
+  const note = { id: uid(), text, color: NOTE_COLORS[0].val, tag: '', priority: 0 };
+  state.notes[dayKey].push(note);
+  save();
+  return note;
+}
+
+// --- Drag state ---
+let drag = { noteId: null, fromKey: null };
+
+// --- Render ---
+function render() {
+  const mon = getMondayOf(state.weekOffset);
+  const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+
+  document.getElementById('weekRange').textContent = `${formatDate(mon)} – ${formatDate(fri)}`;
+  document.getElementById('weekLabel').textContent =
+    `Week ${getWeekNum(mon)} · ${mon.getFullYear()}`;
+
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  DAYS.forEach((name, i) => {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const key = d.toISOString().slice(0,10);
+    ensureDay(key);
+
+    const col = document.createElement('div');
+    col.className = 'day-col' + (isToday(d) ? ' today' : '');
+    col.dataset.key = key;
+
+    col.innerHTML = `
+      <div class="day-header">
+        <div>
+          <div class="day-name">${name}</div>
+          <div class="day-num">${formatDate(d)}</div>
+        </div>
+        <button class="add-note-btn" title="Add note" data-key="${key}">+</button>
+      </div>
+      <div class="day-notes" id="notes-${key}"></div>
+    `;
+
+    board.appendChild(col);
+
+    // Drag-over
+    col.addEventListener('dragover', e => {
+      e.preventDefault();
+      col.classList.add('drag-over');
+    });
+    col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+    col.addEventListener('drop', e => {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      if (drag.noteId && drag.fromKey && drag.fromKey !== key) {
+        moveNote(drag.fromKey, key, drag.noteId);
+      } else if (drag.noteId && drag.fromKey === key) {
+        // reorder within day — just do nothing for now
+      }
+      drag = {};
+    });
+
+    renderNotes(key);
+  });
+
+  // Update move submenu
+  renderMoveSubmenu();
+}
+
+function renderNotes(key) {
+  const container = document.getElementById(`notes-${key}`);
+  if (!container) return;
+  container.innerHTML = '';
+
+  const notes = state.notes[key] || [];
+  if (notes.length === 0) {
+    container.innerHTML = '<div class="day-empty">Drop notes here</div>';
+  }
+
+  notes.forEach(note => {
+    const el = document.createElement('div');
+    el.className = 'note';
+    el.draggable = true;
+    el.dataset.id = note.id;
+    el.dataset.key = key;
+    el.style.background = note.color;
+
+    el.innerHTML = `
+      <div class="note-toolbar">
+        <div class="note-colors">
+          ${NOTE_COLORS.map(c =>
+            `<div class="color-dot" style="background:${c.dot}" data-color="${c.val}" title="${c.label}"></div>`
+          ).join('')}
+        </div>
+        <div class="note-actions">
+          <button class="note-action-btn" data-action="dup" title="Duplicate">⧉</button>
+          <button class="note-action-btn" data-action="del" title="Delete">✕</button>
+        </div>
+      </div>
+      <textarea class="note-text" placeholder="Type a note…">${escHtml(note.text)}</textarea>
+      <div class="note-footer">
+        <input class="note-tag-input" type="text" placeholder="#tag" value="${escHtml(note.tag)}" maxlength="20" />
+        <span class="note-priority" title="Cycle priority">${PRIORITIES[note.priority] || '·'}</span>
+      </div>
+    `;
+
+    // Drag
+    el.addEventListener('dragstart', e => {
+      drag = { noteId: note.id, fromKey: key };
+      setTimeout(() => el.classList.add('dragging'), 0);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+    });
+
+    // Color dots
+    el.querySelectorAll('.color-dot').forEach(dot => {
+      dot.addEventListener('click', e => {
+        e.stopPropagation();
+        setNoteColor(key, note.id, dot.dataset.color);
+      });
+    });
+
+    // Actions
+    el.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (btn.dataset.action === 'del') deleteNote(key, note.id);
+        if (btn.dataset.action === 'dup') duplicateNote(key, note.id);
+      });
+    });
+
+    // Text
+    const ta = el.querySelector('.note-text');
+    ta.addEventListener('input', () => {
+      updateNote(key, note.id, { text: ta.value });
+    });
+    ta.addEventListener('mousedown', e => e.stopPropagation());
+
+    // Tag
+    const tagInput = el.querySelector('.note-tag-input');
+    tagInput.addEventListener('input', () => {
+      updateNote(key, note.id, { tag: tagInput.value });
+    });
+    tagInput.addEventListener('mousedown', e => e.stopPropagation());
+
+    // Priority
+    const prioEl = el.querySelector('.note-priority');
+    prioEl.addEventListener('click', e => {
+      e.stopPropagation();
+      const p = (note.priority + 1) % PRIORITIES.length;
+      updateNote(key, note.id, { priority: p });
+    });
+
+    // Right-click context menu
+    el.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      showContextMenu(e.clientX, e.clientY, key, note.id);
+    });
+
+    container.appendChild(el);
+  });
+
+  // Add note button
+  const addBtn = document.querySelector(`[data-key="${key}"].add-note-btn`);
+  if (addBtn) {
+    addBtn.onclick = () => {
+      addNote(key);
+      render();
+      // Focus new note
+      requestAnimationFrame(() => {
+        const notes = document.querySelectorAll(`#notes-${key} .note`);
+        const last = notes[notes.length - 1];
+        if (last) last.querySelector('.note-text').focus();
+      });
+    };
+  }
+}
+
+// --- Note operations ---
+function updateNote(key, id, patch) {
+  const notes = state.notes[key] || [];
+  const n = notes.find(n => n.id === id);
+  if (n) Object.assign(n, patch);
+  save();
+  // Re-render just the specific note for performance
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (el && patch.color) el.style.background = patch.color;
+  if (el && patch.priority !== undefined) {
+    el.querySelector('.note-priority').textContent = PRIORITIES[patch.priority] || '·';
+  }
+}
+
+function setNoteColor(key, id, color) {
+  updateNote(key, id, { color });
+}
+
+function deleteNote(key, id) {
+  state.notes[key] = (state.notes[key] || []).filter(n => n.id !== id);
+  save();
+  renderNotes(key);
+  toast('Note deleted');
+}
+
+function duplicateNote(key, id) {
+  const notes = state.notes[key] || [];
+  const src = notes.find(n => n.id === id);
+  if (!src) return;
+  const copy = { ...src, id: uid() };
+  const idx = notes.indexOf(src);
+  notes.splice(idx + 1, 0, copy);
+  save();
+  renderNotes(key);
+}
+
+function moveNote(fromKey, toKey, id) {
+  const notes = state.notes[fromKey] || [];
+  const idx = notes.findIndex(n => n.id === id);
+  if (idx < 0) return;
+  const [note] = notes.splice(idx, 1);
+  ensureDay(toKey);
+  state.notes[toKey].push(note);
+  save();
+  renderNotes(fromKey);
+  renderNotes(toKey);
+  toast(`Moved to ${DAYS[weekDayIndex(toKey)]}`);
+}
+
+function weekDayIndex(key) {
+  const mon = getMondayOf(state.weekOffset);
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    if (d.toISOString().slice(0,10) === key) return i;
+  }
+  return -1;
+}
+
+// --- Context menu ---
+let ctxNote = { key: null, id: null };
+
+function showContextMenu(x, y, key, id) {
+  ctxNote = { key, id };
+  const menu = document.getElementById('contextMenu');
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+  menu.classList.add('visible');
+
+  // Build color submenu
+  const colorSub = document.getElementById('colorSubmenu');
+  colorSub.innerHTML = NOTE_COLORS.map(c =>
+    `<div class="context-item" data-color="${c.val}">
+      <div style="width:12px;height:12px;border-radius:50%;background:${c.dot};border:1.5px solid rgba(0,0,0,0.15)"></div>
+      ${c.label}
+    </div>`
+  ).join('');
+  colorSub.querySelectorAll('[data-color]').forEach(el => {
+    el.addEventListener('click', () => {
+      setNoteColor(ctxNote.key, ctxNote.id, el.dataset.color);
+      hideContextMenu();
+    });
+  });
+
+  renderMoveSubmenu();
+}
+
+function renderMoveSubmenu() {
+  const sub = document.getElementById('moveSubmenu');
+  if (!sub) return;
+  const mon = getMondayOf(state.weekOffset);
+  sub.innerHTML = DAYS.map((name, i) => {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const key = d.toISOString().slice(0,10);
+    return `<div class="context-item" data-movekey="${key}">${name}</div>`;
+  }).join('');
+  sub.querySelectorAll('[data-movekey]').forEach(el => {
+    el.addEventListener('click', () => {
+      if (ctxNote.key && ctxNote.id && el.dataset.movekey !== ctxNote.key) {
+        moveNote(ctxNote.key, el.dataset.movekey, ctxNote.id);
+      }
+      hideContextMenu();
+    });
+  });
+}
+
+function hideContextMenu() {
+  document.getElementById('contextMenu').classList.remove('visible');
+}
+
+document.getElementById('duplicateNote').addEventListener('click', () => {
+  if (ctxNote.key && ctxNote.id) duplicateNote(ctxNote.key, ctxNote.id);
+  hideContextMenu();
+});
+
+document.getElementById('deleteNote').addEventListener('click', () => {
+  if (ctxNote.key && ctxNote.id) deleteNote(ctxNote.key, ctxNote.id);
+  hideContextMenu();
+});
+
+document.addEventListener('click', hideContextMenu);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideContextMenu(); });
+
+// --- Controls ---
+document.getElementById('prevWeek').addEventListener('click', () => {
+  state.weekOffset--;
+  save(); render();
+});
+document.getElementById('nextWeek').addEventListener('click', () => {
+  state.weekOffset++;
+  save(); render();
+});
+document.getElementById('todayBtn').addEventListener('click', () => {
+  state.weekOffset = 0;
+  save(); render();
+});
+document.getElementById('clearAllBtn').addEventListener('click', () => {
+  if (!confirm('Clear all notes for this week?')) return;
+  const mon = getMondayOf(state.weekOffset);
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const key = d.toISOString().slice(0,10);
+    state.notes[key] = [];
+  }
+  save(); render();
+  toast('Week cleared');
+});
+
+// --- Toast ---
+let toastTimeout;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// --- Util ---
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getWeekNum(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+// --- Quick Links ---
+let quickLinks = [];
+
+function qlSave() {
+  localStorage.setItem('weekplanner_quicklinks', JSON.stringify(quickLinks));
+}
+
+function qlLoad() {
+  try {
+    const s = localStorage.getItem('weekplanner_quicklinks');
+    if (s) quickLinks = JSON.parse(s);
+  } catch(e) {}
+}
+
+function qlGetFavicon(url) {
+  try {
+    const u = new URL(url);
+    return `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=32`;
+  } catch(e) {
+    return null;
+  }
+}
+
+function qlRender() {
+  const list = document.getElementById('qlList');
+  list.innerHTML = '';
+  quickLinks.forEach((link, idx) => {
+    const a = document.createElement('a');
+    a.className = 'ql-link';
+    a.href = link.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.title = link.url;
+
+    const favicon = qlGetFavicon(link.url);
+    const img = favicon
+      ? `<img class="ql-favicon" src="${favicon}" onerror="this.style.display='none'" />`
+      : '';
+
+    a.innerHTML = `${img}<span>${escHtml(link.label)}</span><span class="ql-del" data-idx="${idx}" title="Remove">✕</span>`;
+
+    // Prevent link navigation when clicking delete
+    a.querySelector('.ql-del').addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      quickLinks.splice(idx, 1);
+      qlSave();
+      qlRender();
+    });
+
+    list.appendChild(a);
+  });
+}
+
+function qlShowModal() {
+  document.getElementById('qlLabelInput').value = '';
+  document.getElementById('qlUrlInput').value = '';
+  document.getElementById('qlModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('qlLabelInput').focus(), 50);
+}
+
+function qlHideModal() {
+  document.getElementById('qlModal').style.display = 'none';
+}
+
+function qlAddLink() {
+  const label = document.getElementById('qlLabelInput').value.trim();
+  let url = document.getElementById('qlUrlInput').value.trim();
+  if (!label || !url) return;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  quickLinks.push({ label, url });
+  qlSave();
+  qlRender();
+  qlHideModal();
+  toast(`"${label}" added`);
+}
+
+document.getElementById('qlAddBtn').addEventListener('click', qlShowModal);
+document.getElementById('qlCancelBtn').addEventListener('click', qlHideModal);
+document.getElementById('qlSaveBtn').addEventListener('click', qlAddLink);
+
+// Close modal on overlay click
+document.getElementById('qlModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('qlModal')) qlHideModal();
+});
+
+// Enter key in modal
+document.getElementById('qlUrlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') qlAddLink();
+});
+document.getElementById('qlLabelInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('qlUrlInput').focus();
+});
+
+// --- Init ---
+load();
+qlLoad();
+render();
+qlRender();
+</script>
+</body>
+</html>
