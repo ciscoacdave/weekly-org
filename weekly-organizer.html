@@ -829,7 +829,10 @@ function load() {
     const s = localStorage.getItem(LS_KEY);
     if (s) {
       const d = JSON.parse(s);
-      if (d.state)      state      = d.state;
+      if (d.state) {
+        state = d.state;
+        state.weekOffset = 0; // always open on the current week
+      }
       if (d.quickLinks) quickLinks = d.quickLinks;
     }
   } catch(e) { console.warn('Could not load saved data:', e); }
